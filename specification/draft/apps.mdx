@@ -751,13 +751,28 @@ Tool execution results are passed to the UI through two mechanisms:
 The original tool call arguments:
 
 ```typescript
-// Tool was called with:
-tools/call("get_weather", { location: "San Francisco" })
+// Tool was called with (JSON-RPC request from Host to Server):
+{
+  jsonrpc: "2.0",
+  id: 1,
+  method: "tools/call",
+  params: {
+    name: "get_weather",
+    arguments: {
+      location: "San Francisco"
+    }
+  }
+}
 
-// UI receives:
-notification: ui/notifications/tool-input
-params: {
-  arguments: { location: "San Francisco" }
+// UI receives (JSON-RPC notification from Host to UI):
+{
+  jsonrpc: "2.0",
+  method: "ui/notifications/tool-input",
+  params: {
+    arguments: {
+      location: "San Francisco"
+    }
+  }
 }
 ```
 
@@ -766,28 +781,44 @@ params: {
 The tool's execution result:
 
 ```typescript
-// Server returns from tool execution:
+// Server returns from tool execution (JSON-RPC response):
 {
-  content: [
-    { type: "text", text: "Current weather: Sunny, 72°F" }
-  ],
-  structuredContent: {
-    temperature: 72,
-    conditions: "sunny",
-    humidity: 45
-  },
-  _meta: {
-    timestamp: "2025-11-10T15:30:00Z",
-    source: "weather-api"
+  jsonrpc: "2.0",
+  id: 1,  // Matches the tools/call request id
+  result: {
+    content: [
+      { type: "text", text: "Current weather: Sunny, 72°F" }
+    ],
+    structuredContent: {
+      temperature: 72,
+      conditions: "sunny",
+      humidity: 45
+    },
+    _meta: {
+      timestamp: "2025-11-10T15:30:00Z",
+      source: "weather-api"
+    }
   }
 }
 
-// UI receives:
-Notification: ui/notifications/tool-result
-params: {
-  content: [...],  // Same as above
-  structuredContent: { temperature: 72, ... },
-  _meta: { timestamp: "...", ... }
+// UI receives (JSON-RPC notification):
+{
+  jsonrpc: "2.0",
+  method: "ui/notifications/tool-result",
+  params: {
+    content: [
+      { type: "text", text: "Current weather: Sunny, 72°F" }
+    ],
+    structuredContent: {
+      temperature: 72,
+      conditions: "sunny",
+      humidity: 45
+    },
+    _meta: {
+      timestamp: "2025-11-10T15:30:00Z",
+      source: "weather-api"
+    }
+  }
 }
 ```
 
@@ -812,7 +843,7 @@ This pattern enables interactive, self-updating widgets.
 
 Note: The called tool may not appear in `tools/list` responses. MCP servers MAY expose private tools specifically designed for UI interaction that are not visible to the agent. UI implementations SHOULD attempt to call tools by name regardless of discoverability. The specification for Private Tools will be covered in a future SEP.
 
-### Client<>Server Capability Negotiation
+### Client\<\>Server Capability Negotiation
 
 Clients and servers negotiate MCP Apps support through the standard MCP extensions capability mechanism (defined in SEP-1724).
 
