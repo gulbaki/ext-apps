@@ -636,49 +636,49 @@ The typical lifecycle for rendering a UI resource:
 
 ```mermaid
 sequenceDiagram
- participant H as Host
- participant S as MCP Server
+  participant H as Host
+  participant S as MCP Server
 
- autonumber
-   S -->> H: resources/list (includes ui:// resources)
-   S -->> H: tools/list (includes tools with ui/resourceUri metadata)
+  autonumber
+  S -->> H: resources/list (includes ui:// resources)
+  S -->> H: tools/list (includes tools with ui/resourceUri metadata)
 ```
 
 #### 2. UI Initialization (Desktop/Native Hosts)
 
 ```mermaid
 sequenceDiagram
- participant H as Host
- participant UI as Guest UI (iframe)
- participant P as Sandbox Proxy
- participant S as MCP Server
+  participant H as Host
+  participant UI as Guest UI (iframe)
+  participant P as Sandbox Proxy
+  participant S as MCP Server
 
- autonumber
- par UI Tool call
-   H ->> S: tools/call to Tool with ui/resourceUri metadata
- and UI initialization
-   alt Desktop/Native hosts
-   H ->> H: Render Guest UI in an iframe (HTML from the ui:// resource)
-   else Web hosts
-   H ->> H: Render Sandbox Proxy in an iframe (different origin)
-   P ->> H: ui/notifications/sandbox-ready
-   H -->> P: ui/notifications/sandbox-resource-ready (HTML content)
-   P -> P: Render inner iframe with HTML
+  autonumber
+  par UI Tool call
+    H ->> S: tools/call to Tool with ui/resourceUri metadata
+  and UI initialization
+    alt Desktop/Native hosts
+      H ->> H: Render Guest UI in an iframe (HTML from the ui:// resource)
+    else Web hosts
+      H ->> H: Render Sandbox Proxy in an iframe (different origin)
+      P ->> H: ui/notifications/sandbox-ready
+      H -->> P: ui/notifications/sandbox-resource-ready (HTML content)
+      P -> P: Render inner iframe with HTML
 
-   end
-   UI ->> H: ui/initialize
-   H -->> UI: McpUiInitializeResult (e.g., host-context, capabilities, etc.)
-   UI ->> H: ui/notifications/initialized
-   opt Stream Tool input to UI
-     H -->> UI: ui/notifications/tool-input-partial (0..n)
-   end
-   H -->> UI: ui/notifications/tool-input (complete)
- end
- alt Tool complete
-   H -->> UI: ui/notifications/tool-result
- else Tool cancelled
-   H -->> UI: ui/notifications/tool-cancelled
- end
+    end
+    UI ->> H: ui/initialize
+    H -->> UI: McpUiInitializeResult (e.g., host-context, capabilities, etc.)
+    UI ->> H: ui/notifications/initialized
+    opt Stream Tool input to UI
+      H -->> UI: ui/notifications/tool-input-partial (0..n)
+    end
+    H -->> UI: ui/notifications/tool-input (complete)
+  end
+  alt Tool complete
+    H -->> UI: ui/notifications/tool-result
+  else Tool cancelled
+    H -->> UI: ui/notifications/tool-cancelled
+  end
 ```
 
 Note: when the Guest UI is rendered inside a sandbox, the sandbox transparently passes messages between the Guest UI and the Host, except for messages named `ui/notifications/sandbox-*`.
@@ -687,51 +687,51 @@ Note: when the Guest UI is rendered inside a sandbox, the sandbox transparently 
 
 ```mermaid
 sequenceDiagram
- actor U as User / Agent
- participant H as Host
- participant UI as Guest UI (iframe)
- participant S as MCP Server
- loop Interactive phase
-   U ->> UI: interaction (e.g., click)
-   alt Tool call
-     UI ->> H: tools/call
-     H ->> S: tools/call
-     opt Stream Tool input to UI
-       H -->> UI: ui/notifications/tool-input-partial (0..n)
-     end
-     H -->> UI: ui/notifications/tool-input (complete)
-     H-->>UI: ui/notifications/tool-result
- else Message
-   UI ->> H: ui/message
-   H -->> H: Process message and follow up
- else Notify
-     UI ->> H: notifications/message
-     H ->> H: Process notification and store in context
- else Resource read
-     UI ->> H: resources/read
-     H ->> S: resources/read
-     S --> H: resources/read response
-     H --> UI: resources/read response
-   end
-   opt UI notifications
-     UI ->> H: notifications (e.g., ui/notifications/size-change)
-   end
-   opt Host notifications
-     H ->> UI: notifications (e.g., ui/notifications/host-context-change)
-   end
- end
+  actor U as User / Agent
+  participant H as Host
+  participant UI as Guest UI (iframe)
+  participant S as MCP Server
+  loop Interactive phase
+    U ->> UI: interaction (e.g., click)
+    alt Tool call
+      UI ->> H: tools/call
+      H ->> S: tools/call
+      opt Stream Tool input to UI
+        H -->> UI: ui/notifications/tool-input-partial (0..n)
+      end
+      H -->> UI: ui/notifications/tool-input (complete)
+      H-->>UI: ui/notifications/tool-result
+    else Message
+      UI ->> H: ui/message
+      H -->> H: Process message and follow up
+    else Notify
+      UI ->> H: notifications/message
+      H ->> H: Process notification and store in context
+    else Resource read
+      UI ->> H: resources/read
+      H ->> S: resources/read
+      S --> H: resources/read response
+      H --> UI: resources/read response
+    end
+    opt UI notifications
+      UI ->> H: notifications (e.g., ui/notifications/size-change)
+    end
+    opt Host notifications
+      H ->> UI: notifications (e.g., ui/notifications/host-context-change)
+    end
+  end
 ```
 
 #### 6. Cleanup
 
 ```mermaid
 sequenceDiagram
- participant H as Host
- participant UI as Guest UI (iframe)
- H ->> UI: ui/resource-teardown
- UI --> UI: Graceful termination
- UI -->> H: ui/resource-teardown response
- H -x H: Tear down iframe and listeners
+  participant H as Host
+  participant UI as Guest UI (iframe)
+  H ->> UI: ui/resource-teardown
+  UI --> UI: Graceful termination
+  UI -->> H: ui/resource-teardown response
+  H -x H: Tear down iframe and listeners
 ```
 
 Note: Cleanup may be triggered at any point in the lifecycle following UI initialization.
